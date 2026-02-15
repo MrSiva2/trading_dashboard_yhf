@@ -3,8 +3,9 @@ from core.training_worker import TrainingWorker
 from core.logger import log
 
 class TrainingTab(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, main_window):
+        super().__init__()
+        self.main_window = main_window
 
         self.status = QLabel("Idle")
         self.start_btn = QPushButton("Start Training")
@@ -18,7 +19,7 @@ class TrainingTab(QWidget):
     def start_training(self):
         log("SYSTEM", "Starting training worker")
         worker = TrainingWorker()
-        self.parent().parent().start_worker(worker)
+        self.main_window.start_worker(worker)
 
         worker.progress.connect(self.on_progress)
         worker.finished.connect(lambda: self.status.setText("Finished"))

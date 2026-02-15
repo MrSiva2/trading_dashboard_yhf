@@ -21,6 +21,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Trading ML Dashboard")
         self.resize(1400, 900)
+        self.threads = []
 
         # ---- Logs Dock FIRST ----
         self.logs_widget = LogsWidget()
@@ -37,9 +38,9 @@ class MainWindow(QMainWindow):
 
         # ---- THEN create tabs ----
         self.tabs = QTabWidget()
-        self.tabs.addTab(TrainingTab(), "Training")
-        self.tabs.addTab(BacktestTab(), "Backtesting")
-        self.tabs.addTab(LiveTab(), "Live")
+        self.tabs.addTab(TrainingTab(self), "Training")
+        self.tabs.addTab(BacktestTab(self), "Backtesting")
+        self.tabs.addTab(LiveTab(self), "Live")
         self.setCentralWidget(self.tabs)
 
         from core.logger import log
@@ -48,12 +49,20 @@ class MainWindow(QMainWindow):
     def start_worker(self, worker):
         thread = QThread()
         worker.moveToThread(thread)
-
+        
         worker.log.connect(signal_bus.log)
         thread.started.connect(worker.run)
         worker.finished.connect(thread.quit)
         worker.finished.connect(worker.deleteLater)
         thread.finished.connect(thread.deleteLater)
+
+        # Keep reference
+        self.threads.append(thread)
+
+        # Remove when done
+        thread.finished.connect(lambda: self.threads.remove(thread))
+
         thread.start()
         return worker
+
     
